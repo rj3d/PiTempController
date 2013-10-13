@@ -11,21 +11,31 @@ class Controller:
             GPIO.setup(ioConfig.o_pin, GPIO.OUT)
             o_states[ioConfig.o_pin] = 0
         return o_states
-
+        
     def __init__(self, config_path):
+        self.config_path = config_path
         self.config = Config(config_path)
         self.tempReader = TempReader()
         self.o_states = self.init_gpio()
+        
+    def refresh_config(self):
+        try:
+            self.config = Config(self.config_path)
+        except:
+            print "Error: Unable to update configuration file."
         
     def cur_dt_str(self):
         return time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
         
     def control(self, ioConfig):
         temp_c, temp_f = self.tempReader.read_temp(ioConfig.i_path)
-        if (ioConfig.set_temp < temp_f):
+        if (temp_c == 0.0 and temp_f == 0.0): #Temp probe not plugged in
+            GPIO.output(ioConfig.o_pin, False)
+            self.o_states[ioConfig.o_pin] = 0
+        elif ( ioConfig.on_fn(temp_f) ):
             GPIO.output(ioConfig.o_pin, True)
             self.o_states[ioConfig.o_pin] = 1
-        elif (ioConfig.set_temp - ioConfig.buffer_temp >= temp_f):
+        elif (ioConfig.off_fn(temp_f)):
             GPIO.output(ioConfig.o_pin, False)
             self.o_states[ioConfig.o_pin] = 0
         return temp_f
@@ -48,6 +58,8 @@ class Controller:
             f.close()
             
             time.sleep(5)
+            
+            self.refresh_config()
 
 if __name__ == "__main__":
     import sys

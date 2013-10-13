@@ -1,9 +1,25 @@
 class IoConfig:
-	def __init__(self, i_path, o_pin, set_temp, buffer_temp):
+	def __init__(self, i_path, o_pin, set_temp, buffer_temp, direction):
 		self.i_path = i_path
 		self.o_pin = o_pin
 		self.set_temp = set_temp
 		self.buffer_temp = buffer_temp
+		self.on_fn = self.get_on_fn(direction)
+		self.off_fn = self.get_off_fn(direction)
+
+	def get_on_fn(self, direction):
+		if direction == '-':
+			return lambda t: self.set_temp < t
+		elif direction == '+':
+			return lambda t: self.set_temp > t
+		return None
+		
+	def get_off_fn(self, direction):
+		if direction == '-':
+			return lambda t: self.set_temp - self.buffer_temp >= t
+		elif direction == '+':
+			return lambda t: self.set_temp - self.buffer_temp <= t
+		return None
 
 	def __repr__(self):
 		return 'IoConfig()'
@@ -26,7 +42,8 @@ class Config:
 			self.io.append( IoConfig( temp_path % { "TEMP" :splat[0] },
 				int(splat[1]),
 				float(splat[2]),
-				float(splat[3])
+				float(splat[3]),
+				splat[4]
 			) ) 
 		f.close()
 
