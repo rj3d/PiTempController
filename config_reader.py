@@ -19,7 +19,7 @@ class IoConfig:
 		if direction == '-':
 			return lambda t: self.set_temp - self.buffer_temp >= t
 		elif direction == '+':
-			return lambda t: self.set_temp - self.buffer_temp <= t
+			return lambda t: self.set_temp + self.buffer_temp <= t
 		return None
 
 	def __repr__(self):
